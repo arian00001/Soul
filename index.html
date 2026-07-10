@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dearest - Minimalist Hero</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- GSAP for Smooth Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <!-- Google Fonts for beautiful typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #FFF5F7;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .font-cursive {
+            font-family: 'Dancing Script', cursive;
+        }
+        
+        .font-serif-elegant {
+            font-family: 'Playfair Display', serif;
+            color: #4A1E24; /* Deep, readable romantic rose-plum color */
+        }
+
+        /* Ambient Glow Background Animation */
+        @keyframes softGlow {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 0.6;
+                filter: blur(80px);
+            }
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+                filter: blur(100px);
+            }
+        }
+        .ambient-glow {
+            background: radial-gradient(circle, #F5D0D7 0%, rgba(255,245,247,0) 70%);
+            animation: softGlow 10s ease-in-out infinite;
+            will-change: transform, opacity;
+        }
+
+        /* Floating elements custom animation */
+        .floating-heart {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* Smooth video rendering settings to prevent desync */
+        video {
+            will-change: transform;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start py-8 md:py-12 px-4 md:px-8 relative selection:bg-[#F5D0D7] selection:text-[#4A1E24]">
+
+    <!-- Background fixed container jate kono extra scrolling space toiri na hoy -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <!-- Ambient Glow Backgrounds -->
+        <div class="absolute inset-0 flex items-center justify-center">
+            <div class="ambient-glow w-[500px] h-[500px] md:w-[600px] md:h-[600px] rounded-full"></div>
+        </div>
+        <!-- Background Elements Container (Floating Hearts/Sparkles) -->
+        <div id="floatingLayer" class="absolute inset-0"></div>
+    </div>
+
+    <!-- Main wrapper content jeta sequential vabe thakbe -->
+    <div class="w-full max-w-4xl flex flex-col items-center gap-8 md:gap-12 relative z-10">
+
+        <!-- HEADER AREA (Above Video) -->
+        <header class="text-center flex flex-col items-center gap-3 w-full">
+            <!-- Decorative Top SVG Flourish -->
+            <svg id="topFlourish" class="w-28 h-6 text-[#e09fb0] opacity-80" viewBox="0 0 100 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 10C30 15 40 5 50 10C60 15 70 5 90 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="50" cy="10" r="3" fill="currentColor"/>
+                <path d="M40 10C45 5 48 5 50 10" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+                <path d="M60 10C55 5 52 5 50 10" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+            </svg>
+
+            <!-- "My Dearest" Salutation -->
+            <h1 id="salutation" class="font-cursive text-4xl md:text-5xl text-[#a24a5b] font-bold drop-shadow-sm">
+                My Dearest,
+            </h1>
+        </header>
+
+        <!-- HERO VIDEO CONTAINER (Middle) -->
+        <main id="videoContainer" class="relative w-full aspect-video rounded-3xl overflow-hidden shadow-[0_20px_60px_-10px_rgba(245,170,185,0.5)] border-4 border-[#F5D0D7] bg-[#FFF5F7] transition-all duration-700 ease-in-out transform hover:scale-[1.01] opacity-0 translate-y-8">
+            
+            <!-- Loading Indicator -->
+            <div id="loadingState" class="absolute inset-0 flex flex-col items-center justify-center bg-[#FFF5F7] z-30 transition-opacity duration-500">
+                <div class="w-10 h-10 border-4 border-[#F5D0D7] border-t-pink-600 rounded-full animate-spin mb-3"></div>
+                <p id="loadingText" class="text-xs text-pink-600 font-medium animate-pulse">Video ready hocche...</p>
+            </div>
+
+            <!-- Error Message (Hidden by default) -->
+            <div id="errorState" class="absolute inset-0 hidden flex-col items-center justify-center bg-[#FFF5F7] p-6 text-center z-40">
+                <svg class="w-12 h-12 text-pink-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h3 class="text-base font-bold text-gray-800 mb-1">Video load kora jaini</h3>
+                <p class="text-xs text-gray-600 max-w-xs">Internet check korun ebong page refresh korun.</p>
+            </div>
+
+            <!-- Autoplay Blocked Fallback Play Button -->
+            <div id="playFallback" class="absolute inset-0 hidden flex items-center justify-center bg-black/5 z-20 transition-all duration-300">
+                <button id="startBtn" class="w-16 h-16 rounded-full bg-white/90 backdrop-blur-md shadow-2xl flex items-center justify-center text-[#a24a5b] hover:scale-110 active:scale-95 transition-all duration-300 border border-white/50">
+                    <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Pure Video Element (pointer-events-none ensures no direct clicks pause the video) -->
+            <video 
+                id="heroVideo"
+                class="w-full h-full object-cover rounded-[1.2rem] opacity-0 transition-opacity duration-500 pointer-events-none"
+                autoplay 
+                loop 
+                muted
+                playsinline
+                preload="auto"
+            >
+                Your browser does not support the video tag.
+            </video>
+
+        </main>
+
+        <!-- FOOTER AREA (Below Video) -->
+        <footer class="w-full text-center flex flex-col items-center gap-6 px-2 md:px-12">
+            <!-- The Main Letter Content -->
+            <div id="letterBody" class="font-serif-elegant text-base md:text-xl leading-relaxed space-y-4 max-w-2xl">
+                <p class="letter-para opacity-0 translate-y-4">
+                    I ask for nothing but the chance to be honest.
+                </p>
+                <p class="letter-para opacity-0 translate-y-4">
+                    I loved you quietly, without expecting you to love me back. If my heart must remain unanswered, let it still be grateful—for it had the privilege of loving someone as wonderful as you.
+                </p>
+                <p class="letter-para opacity-0 translate-y-4">
+                    If you never choose me, I will still wish you happiness.
+                </p>
+            </div>
+
+            <!-- Heart Divider SVG -->
+            <div id="heartDivider" class="opacity-0 scale-75 my-1">
+                <svg class="w-10 h-10 text-[#e09fb0]" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            </div>
+
+            <!-- Sign-off Block -->
+            <div id="signoffBlock" class="flex flex-col items-center gap-1 opacity-0 translate-y-4">
+                <span class="font-cursive text-2xl md:text-3xl text-[#a24a5b] font-semibold">Forever,</span>
+                <span class="font-serif-elegant italic text-xs md:text-sm tracking-widest uppercase opacity-80">The One Who Loved You in Silence</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Script Area for Video, Audio & GSAP Animations -->
+    <script>
+        const video = document.getElementById('heroVideo');
+        const loadingState = document.getElementById('loadingState');
+        const loadingText = document.getElementById('loadingText');
+        const errorState = document.getElementById('errorState');
+        const playFallback = document.getElementById('playFallback');
+        const startBtn = document.getElementById('startBtn');
+
+        const VIDEO_URL = "https://raw.githubusercontent.com/arian00001/Mp4_hosting/main/Song.mp4";
+        const DB_NAME = "LoveLetterVideoDB";
+        const STORE_NAME = "videos";
+        const CACHE_KEY = "song_video";
+
+        // GSAP Animations on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline({ defaults: { ease: 'power3.out', duration: 1.0 } });
+            
+            tl.fromTo('#topFlourish', { opacity: 0, y: -15 }, { opacity: 0.8, y: 0, delay: 0.3 })
+              .fromTo('#salutation', { opacity: 0, scale: 0.92 }, { opacity: 1, scale: 1, duration: 1.2 }, '-=0.6')
+              .to('#videoContainer', { opacity: 1, y: 0, duration: 1.2 }, '-=0.8')
+              .to('.letter-para', { opacity: 1, y: 0, stagger: 0.3 }, '-=0.4')
+              .to('#heartDivider', { opacity: 1, scale: 1, rotate: 360, duration: 0.8 }, '-=0.2')
+              .to('#signoffBlock', { opacity: 1, y: 0 }, '-=0.4');
+
+            createFloatingHearts();
+        });
+
+        // Background Hearts Generator
+        function createFloatingHearts() {
+            const container = document.getElementById('floatingLayer');
+            const heartSVG = `
+                <svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#F5D0D7] opacity-40">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+            `;
+
+            for (let i = 0; i < 10; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart';
+                heart.innerHTML = heartSVG;
+                
+                const size = Math.random() * 16 + 8; // 8px to 24px
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                
+                container.appendChild(heart);
+                animateSingleHeart(heart);
+            }
+        }
+
+        function animateSingleHeart(heart) {
+            const startX = Math.random() * window.innerWidth;
+            const startY = window.innerHeight + 30;
+            const endY = -30;
+            const duration = Math.random() * 12 + 8;
+
+            gsap.set(heart, { x: startX, y: startY, opacity: 0, scale: Math.random() * 0.4 + 0.6 });
+
+            gsap.to(heart, {
+                y: endY,
+                x: startX + (Math.random() * 80 - 40),
+                opacity: Math.random() * 0.3 + 0.1,
+                duration: duration,
+                ease: 'none',
+                onComplete: () => {
+                    animateSingleHeart(heart);
+                }
+            });
+        }
+
+        // --- INDEXEDDB CACHING ENGINE ---
+        
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME);
+                    }
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function getCachedBlob(db) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, "readonly");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(CACHE_KEY);
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        function saveBlobToCache(db, blob) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(STORE_NAME, "readwrite");
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.put(blob, CACHE_KEY);
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function loadVideo() {
+            try {
+                const db = await initDB();
+                const cachedBlob = await getCachedBlob(db);
+
+                if (cachedBlob) {
+                    // Play instantly from local cache (Works offline & super fast!)
+                    console.log("Loading video from offline cache...");
+                    const objectUrl = URL.createObjectURL(cachedBlob);
+                    video.src = objectUrl;
+                } else {
+                    // First-time visit: Stream immediately from URL (No waiting/blocking loading text)
+                    console.log("Streaming directly from URL first...");
+                    video.src = VIDEO_URL;
+
+                    // Silently download and cache the video in the background
+                    fetch(VIDEO_URL)
+                        .then(response => {
+                            if (response.ok) return response.blob();
+                            throw new Error("Failed to fetch for cache");
+                        })
+                        .then(blob => {
+                            saveBlobToCache(db, blob);
+                            console.log("Video cached silently for next time!");
+                        })
+                        .catch(err => console.warn("Background caching silent error:", err));
+                }
+            } catch (err) {
+                console.warn("IndexedDB access error, falling back to direct stream:", err);
+                video.src = VIDEO_URL;
+            }
+        }
+
+        // Load video dynamically (Smart Caching)
+        loadVideo();
+
+        // Hide loader when the video can play through
+        video.addEventListener('canplaythrough', () => {
+            loadingState.style.opacity = '0';
+            setTimeout(() => {
+                loadingState.classList.add('hidden');
+            }, 500);
+            video.classList.remove('opacity-0');
+            video.play().catch(() => {
+                console.log("Autoplay waiting for touch.");
+            });
+        });
+
+        // Error handling if both offline load and stream fails
+        video.addEventListener('error', () => {
+            loadingState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+        });
+
+        // Unmute safely on touch (Never pauses, only unmutes once)
+        const attemptPlayWithSound = () => {
+            if (video.paused) {
+                video.muted = false;
+                video.play()
+                    .then(() => {
+                        playFallback.classList.add('hidden');
+                    })
+                    .catch(() => {
+                        playFallback.classList.remove('hidden');
+                    });
+            } else {
+                video.muted = false;
+                playFallback.classList.add('hidden');
+            }
+        };
+
+        startBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            attemptPlayWithSound();
+        });
+
+        const triggerPlayOnInteraction = () => {
+            attemptPlayWithSound();
+            document.removeEventListener('click', triggerPlayOnInteraction);
+            document.removeEventListener('touchstart', triggerPlayOnInteraction);
+        };
+        document.addEventListener('click', triggerPlayOnInteraction);
+        document.addEventListener('touchstart', triggerPlayOnInteraction);
+    </script>
+</body>
+</html>
