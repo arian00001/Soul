@@ -9,7 +9,7 @@
     <!-- GSAP for Smooth Animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <!-- Google Fonts for beautiful typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
         body {
@@ -24,7 +24,7 @@
         
         .font-serif-elegant {
             font-family: 'Playfair Display', serif;
-            color: #4A1E24; /* Deep, readable romantic rose-plum color */
+            color: #4A1E24;
         }
 
         /* Ambient Glow Background Animation */
@@ -60,21 +60,39 @@
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
         }
+
+        /* Circular Progress Dasharray Animation Base */
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.1s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Heart Beat Animation */
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            40% { transform: scale(1.05); }
+            60% { transform: scale(1.15); }
+        }
+        .beat-heart {
+            animation: heartBeat 1.4s infinite ease-in-out;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start py-8 md:py-12 px-4 md:px-8 relative selection:bg-[#F5D0D7] selection:text-[#4A1E24]">
 
-    <!-- Background fixed container jate kono extra scrolling space toiri na hoy -->
+    <!-- Background fixed container -->
     <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
         <!-- Ambient Glow Backgrounds -->
         <div class="absolute inset-0 flex items-center justify-center">
             <div class="ambient-glow w-[500px] h-[500px] md:w-[600px] md:h-[600px] rounded-full"></div>
         </div>
-        <!-- Background Elements Container (Floating Hearts/Sparkles) -->
+        <!-- Background Elements Container -->
         <div id="floatingLayer" class="absolute inset-0"></div>
     </div>
 
-    <!-- Main wrapper content jeta sequential vabe thakbe -->
+    <!-- Main wrapper content -->
     <div class="w-full max-w-4xl flex flex-col items-center gap-8 md:gap-12 relative z-10">
 
         <!-- HEADER AREA (Above Video) -->
@@ -96,13 +114,30 @@
         <!-- HERO VIDEO CONTAINER (Middle) -->
         <main id="videoContainer" class="relative w-full aspect-video rounded-3xl overflow-hidden shadow-[0_20px_60px_-10px_rgba(245,170,185,0.5)] border-4 border-[#F5D0D7] bg-[#FFF5F7] transition-all duration-700 ease-in-out transform hover:scale-[1.01] opacity-0 translate-y-8">
             
-            <!-- Loading Indicator -->
-            <div id="loadingState" class="absolute inset-0 flex flex-col items-center justify-center bg-[#FFF5F7] z-30 transition-opacity duration-500">
-                <div class="w-10 h-10 border-4 border-[#F5D0D7] border-t-pink-600 rounded-full animate-spin mb-3"></div>
-                <p id="loadingText" class="text-xs text-pink-600 font-medium animate-pulse">Video ready hocche...</p>
+            <!-- Beautiful Circular Progress Loader -->
+            <div id="loadingState" class="absolute inset-0 flex flex-col items-center justify-center bg-[#FFF5F7] z-30 transition-all duration-500">
+                <div class="relative w-36 h-36 flex items-center justify-center">
+                    <!-- Circular Progress Ring SVG -->
+                    <svg class="w-full h-full transform -rotate-90">
+                        <!-- Background Circle -->
+                        <circle cx="72" cy="72" r="58" stroke="#FDE2E4" stroke-width="6" fill="transparent" />
+                        <!-- Foreground Active Circle -->
+                        <circle id="progressCircle" cx="72" cy="72" r="58" stroke="#e09fb0" stroke-width="8" fill="transparent" 
+                                stroke-dasharray="364.4" stroke-dashoffset="364.4" stroke-linecap="round" class="progress-ring__circle" />
+                    </svg>
+                    <!-- Inner Content -->
+                    <div class="absolute flex flex-col items-center justify-center">
+                        <svg class="w-6 h-6 text-[#a24a5b] beat-heart mb-1" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span id="percentText" class="text-xl font-bold text-[#4A1E24] tracking-tight">0%</span>
+                    </div>
+                </div>
+                <p id="loadingText" class="text-xs text-[#a24a5b] font-semibold tracking-wider mt-4 animate-pulse">Surer badhone badhchi...</p>
+                <span id="cacheBadge" class="hidden mt-2 px-3 py-1 bg-green-100 text-green-700 text-[10px] uppercase tracking-widest rounded-full font-bold">Offline Saved ⚡</span>
             </div>
 
-            <!-- Error Message (Hidden by default) -->
+            <!-- Error Message -->
             <div id="errorState" class="absolute inset-0 hidden flex-col items-center justify-center bg-[#FFF5F7] p-6 text-center z-40">
                 <svg class="w-12 h-12 text-pink-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
@@ -120,7 +155,7 @@
                 </button>
             </div>
 
-            <!-- Pure Video Element (pointer-events-none ensures no direct clicks pause the video) -->
+            <!-- Pure Video Element -->
             <video 
                 id="heroVideo"
                 class="w-full h-full object-cover rounded-[1.2rem] opacity-0 transition-opacity duration-500 pointer-events-none"
@@ -171,14 +206,25 @@
         const video = document.getElementById('heroVideo');
         const loadingState = document.getElementById('loadingState');
         const loadingText = document.getElementById('loadingText');
+        const percentText = document.getElementById('percentText');
+        const progressCircle = document.getElementById('progressCircle');
+        const cacheBadge = document.getElementById('cacheBadge');
         const errorState = document.getElementById('errorState');
         const playFallback = document.getElementById('playFallback');
         const startBtn = document.getElementById('startBtn');
 
+        const radius = progressCircle.r.baseVal.value;
+        const circumference = radius * 2 * Math.PI;
+
         const VIDEO_URL = "https://raw.githubusercontent.com/arian00001/Mp4_hosting/main/Song.mp4";
-        const DB_NAME = "LoveLetterVideoDB";
-        const STORE_NAME = "videos";
-        const CACHE_KEY = "song_video";
+        const CACHE_NAME = "dearest-video-cache-v1";
+
+        const statusTexts = [
+            "Kache asche surer murchona...",
+            "Sriti gulo sajiye nicchi...",
+            "Obhimaan gulo joma hocche...",
+            "Almost ready, shuru hocche..."
+        ];
 
         // GSAP Animations on Load
         window.addEventListener('DOMContentLoaded', () => {
@@ -194,6 +240,23 @@
             createFloatingHearts();
         });
 
+        // Set Progress Ring Value
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+            percentText.textContent = `${Math.round(percent)}%`;
+
+            if (percent > 20 && percent <= 50) {
+                loadingText.textContent = statusTexts[0];
+            } else if (percent > 50 && percent <= 75) {
+                loadingText.textContent = statusTexts[1];
+            } else if (percent > 75 && percent <= 95) {
+                loadingText.textContent = statusTexts[2];
+            } else if (percent > 95) {
+                loadingText.textContent = statusTexts[3];
+            }
+        }
+
         // Background Hearts Generator
         function createFloatingHearts() {
             const container = document.getElementById('floatingLayer');
@@ -208,7 +271,7 @@
                 heart.className = 'floating-heart';
                 heart.innerHTML = heartSVG;
                 
-                const size = Math.random() * 16 + 8; // 8px to 24px
+                const size = Math.random() * 16 + 8;
                 heart.style.width = `${size}px`;
                 heart.style.height = `${size}px`;
                 
@@ -237,97 +300,122 @@
             });
         }
 
-        // --- INDEXEDDB CACHING ENGINE ---
-        
-        function initDB() {
-            return new Promise((resolve, reject) => {
-                const request = indexedDB.open(DB_NAME, 1);
-                request.onupgradeneeded = (e) => {
-                    const db = e.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) {
-                        db.createObjectStore(STORE_NAME);
-                    }
-                };
-                request.onsuccess = (e) => resolve(e.target.result);
-                request.onerror = (e) => reject(e.target.error);
-            });
-        }
+        // --- EXTREMELY ROBUST CACHE STORAGE ENGINE ---
 
-        function getCachedBlob(db) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, "readonly");
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.get(CACHE_KEY);
-                request.onsuccess = (e) => resolve(e.target.result);
-                request.onerror = (e) => reject(e.target.error);
-            });
-        }
-
-        function saveBlobToCache(db, blob) {
-            return new Promise((resolve, reject) => {
-                const transaction = db.transaction(STORE_NAME, "readwrite");
-                const store = transaction.objectStore(STORE_NAME);
-                const request = store.put(blob, CACHE_KEY);
-                request.onsuccess = () => resolve();
-                request.onerror = (e) => reject(e.target.error);
-            });
-        }
-
-        async function loadVideo() {
+        async function initCacheAndLoadVideo() {
             try {
-                const db = await initDB();
-                const cachedBlob = await getCachedBlob(db);
+                // Browser-e Cache Storage support kore kina dekhe nicchi
+                if (!('caches' in window)) {
+                    throw new Error("Cache API not supported");
+                }
 
-                if (cachedBlob) {
-                    // Play instantly from local cache (Works offline & super fast!)
-                    console.log("Loading video from offline cache...");
-                    const objectUrl = URL.createObjectURL(cachedBlob);
-                    video.src = objectUrl;
+                const cache = await caches.open(CACHE_NAME);
+                const cachedResponse = await cache.match(VIDEO_URL);
+
+                if (cachedResponse) {
+                    console.log("Found in Local Cache! Loading instantly...");
+                    cacheBadge.classList.remove('hidden');
+                    
+                    // Offline cache thakle loading speed extremely fast (0 to 100 instantly)
+                    let p = 0;
+                    const interval = setInterval(async () => {
+                        p += 15;
+                        if (p >= 100) {
+                            p = 100;
+                            clearInterval(interval);
+                            
+                            // Blob-e convert kore direct offline state theke run hobe
+                            const blob = await cachedResponse.blob();
+                            video.src = URL.createObjectURL(blob);
+                        }
+                        setProgress(p);
+                    }, 20);
+
                 } else {
-                    // First-time visit: Stream immediately from URL (No waiting/blocking loading text)
-                    console.log("Streaming directly from URL first...");
-                    video.src = VIDEO_URL;
+                    console.log("Not cached yet. Fetching and saving in cache simultaneously...");
+                    
+                    const response = await fetch(VIDEO_URL);
+                    if (!response.ok) throw new Error("Network response failed");
 
-                    // Silently download and cache the video in the background
-                    fetch(VIDEO_URL)
-                        .then(response => {
-                            if (response.ok) return response.blob();
-                            throw new Error("Failed to fetch for cache");
-                        })
-                        .then(blob => {
-                            saveBlobToCache(db, blob);
-                            console.log("Video cached silently for next time!");
-                        })
-                        .catch(err => console.warn("Background caching silent error:", err));
+                    // Clone the response because reading the body consumes it
+                    const responseClone = response.clone();
+                    
+                    const reader = response.body.getReader();
+                    const contentLength = +response.headers.get('Content-Length');
+
+                    if (!contentLength) {
+                        // Fallback trigger jodi header missing thake
+                        video.src = VIDEO_URL;
+                        let p = 0;
+                        const sim = setInterval(() => {
+                            p += 5;
+                            if (p >= 95) clearInterval(sim);
+                            setProgress(p);
+                        }, 100);
+                        video.addEventListener('canplaythrough', () => {
+                            clearInterval(sim);
+                            setProgress(100);
+                        }, { once: true });
+                        return;
+                    }
+
+                    let receivedLength = 0;
+                    let chunks = [];
+
+                    while(true) {
+                        const {done, value} = await reader.read();
+                        if (done) break;
+                        chunks.push(value);
+                        receivedLength += value.length;
+                        
+                        const percent = (receivedLength / contentLength) * 100;
+                        setProgress(percent);
+                    }
+
+                    setProgress(100);
+                    
+                    // Storage-e complete file-ti pathiye deya holo porer barer jonne
+                    await cache.put(VIDEO_URL, new Response(new Blob(chunks), {
+                        headers: { 'Content-Type': 'video/mp4' }
+                    }));
+                    console.log("Successfully saved to browser cache!");
+
+                    const completedBlob = new Blob(chunks, { type: 'video/mp4' });
+                    video.src = URL.createObjectURL(completedBlob);
                 }
             } catch (err) {
-                console.warn("IndexedDB access error, falling back to direct stream:", err);
+                console.warn("Cache fail, fallback to regular stream:", err);
                 video.src = VIDEO_URL;
+                setProgress(100);
             }
         }
 
-        // Load video dynamically (Smart Caching)
-        loadVideo();
+        // Action Trigger
+        initCacheAndLoadVideo();
 
-        // Hide loader when the video can play through
+        // Handle Reveal transitions
         video.addEventListener('canplaythrough', () => {
-            loadingState.style.opacity = '0';
-            setTimeout(() => {
-                loadingState.classList.add('hidden');
-            }, 500);
-            video.classList.remove('opacity-0');
-            video.play().catch(() => {
-                console.log("Autoplay waiting for touch.");
+            gsap.to('#loadingState', {
+                opacity: 0,
+                scale: 0.9,
+                duration: 0.6,
+                onComplete: () => {
+                    loadingState.classList.add('hidden');
+                    video.classList.remove('opacity-0');
+                    video.play().catch(() => {
+                        console.log("Waiting for user interaction to play audio.");
+                    });
+                }
             });
         });
 
-        // Error handling if both offline load and stream fails
+        // Fail-safe error state
         video.addEventListener('error', () => {
             loadingState.classList.add('hidden');
             errorState.classList.remove('hidden');
         });
 
-        // Unmute safely on touch (Never pauses, only unmutes once)
+        // Play/Unmute Safe Handler
         const attemptPlayWithSound = () => {
             if (video.paused) {
                 video.muted = false;
